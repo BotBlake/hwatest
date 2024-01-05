@@ -19,6 +19,11 @@
 #
 ###############################################################################
 
+#new
+import hwitool
+import platform
+
+
 import click
 import os
 import urllib.request
@@ -50,14 +55,14 @@ test_source_files = {
 }
 
 ffmpeg_streams = {
-    "cpu-h264": "{ffmpeg} -c:v h264 -i {video_path}/{video_file} -autoscale 0 -an -sn -vf scale=trunc(min(max(iw\,ih*a)\,{scale})/2)*2:trunc(ow/a/2)*2,format=yuv420p -c:v libx264 -preset veryfast -b:v {bitrate} -maxrate {bitrate} -f null - -benchmark",
-    "cpu-hevc": "{ffmpeg} -c:v hevc -i {video_path}/{video_file} -autoscale 0 -an -sn -vf scale=trunc(min(max(iw\,ih*a)\,{scale})/2)*2:trunc(ow/a/2)*2,format=yuv420p -c:v libx265 -preset veryfast -b:v {bitrate} -maxrate {bitrate} -f null - -benchmark",
-    "nvenc-h264": "{ffmpeg} -init_hw_device cuda=cu:{gpu} -hwaccel cuda -hwaccel_output_format cuda -c:v h264_cuvid -i {video_path}/{video_file} -autoscale 0 -an -sn -vf scale_cuda=-1:{scale}:yuv420p -c:v h264_nvenc -preset p1 -b:v {bitrate} -maxrate {bitrate} -f null - -benchmark",
-    "nvenc-hevc": "{ffmpeg} -init_hw_device cuda=cu:{gpu} -hwaccel cuda -hwaccel_output_format cuda -c:v hevc_cuvid -i {video_path}/{video_file} -autoscale 0 -an -sn -vf scale_cuda=-1:{scale}:yuv420p -c:v hevc_nvenc -preset p1 -b:v {bitrate} -maxrate {bitrate} -f null - -benchmark",
-    "vaapi-h264": "ffmpeg -init_hw_device vaapi=va:/dev/dri/by-path/{gpu}-render -hwaccel vaapi -hwaccel_output_format vaapi -c:v h264 -i {video_path}/{video_file} -autoscale 0 -an -sn -vf scale_vaapi=-1:{scale}:format=nv12 -c:v h264_vaapi -b:v {bitrate} -maxrate {bitrate} -f null - -benchmark",
-    "vaapi-hevc": "ffmpeg -init_hw_device vaapi=va:/dev/dri/by-path/{gpu}-render -hwaccel vaapi -hwaccel_output_format vaapi -c:v hevc -i {video_path}/{video_file} -autoscale 0 -an -sn -vf scale_vaapi=-1:{scale}:format=nv12 -c:v hevc_vaapi -b:v {bitrate} -maxrate {bitrate} -f null - -benchmark",
-    "qsv-h264": "{ffmpeg} -init_hw_device vaapi=va:/dev/dri/by-path/{gpu}-render -init_hw_device qsv=qs@va -hwaccel qsv -hwaccel_output_format qsv -c:v h264_qsv -i {video_path}/{video_file} -autoscale 0 -an -sn -vf scale_qsv=-1:{scale}:format=nv12 -c:v h264_qsv -preset veryfast -b:v {bitrate} -maxrate {bitrate} -f null - -benchmark",
-    "qsv-hevc": "{ffmpeg} -init_hw_device vaapi=va:/dev/dri/by-path/{gpu}-render -init_hw_device qsv=qs@va -hwaccel qsv -hwaccel_output_format qsv -c:v hevc_qsv -i {video_path}/{video_file} -autoscale 0 -an -sn -vf scale_qsv=-1:{scale}:format=nv12 -c:v hevc_qsv -preset veryfast -b:v {bitrate} -maxrate {bitrate} -f null - -benchmark",
+    "cpu-h264": r"{ffmpeg} -c:v h264 -i {video_path}/{video_file} -autoscale 0 -an -sn -vf scale=trunc(min(max(iw\,ih*a)\,{scale})/2)*2:trunc(ow/a/2)*2,format=yuv420p -c:v libx264 -preset veryfast -b:v {bitrate} -maxrate {bitrate} -f null - -benchmark",
+    "cpu-hevc": r"{ffmpeg} -c:v hevc -i {video_path}/{video_file} -autoscale 0 -an -sn -vf scale=trunc(min(max(iw\,ih*a)\,{scale})/2)*2:trunc(ow/a/2)*2,format=yuv420p -c:v libx265 -preset veryfast -b:v {bitrate} -maxrate {bitrate} -f null - -benchmark",
+    "nvenc-h264": r"{ffmpeg} -init_hw_device cuda=cu:{gpu} -hwaccel cuda -hwaccel_output_format cuda -c:v h264_cuvid -i {video_path}/{video_file} -autoscale 0 -an -sn -vf scale_cuda=-1:{scale}:yuv420p -c:v h264_nvenc -preset p1 -b:v {bitrate} -maxrate {bitrate} -f null - -benchmark",
+    "nvenc-hevc": r"{ffmpeg} -init_hw_device cuda=cu:{gpu} -hwaccel cuda -hwaccel_output_format cuda -c:v hevc_cuvid -i {video_path}/{video_file} -autoscale 0 -an -sn -vf scale_cuda=-1:{scale}:yuv420p -c:v hevc_nvenc -preset p1 -b:v {bitrate} -maxrate {bitrate} -f null - -benchmark",
+    "vaapi-h264": r"ffmpeg -init_hw_device vaapi=va:/dev/dri/by-path/{gpu}-render -hwaccel vaapi -hwaccel_output_format vaapi -c:v h264 -i {video_path}/{video_file} -autoscale 0 -an -sn -vf scale_vaapi=-1:{scale}:format=nv12 -c:v h264_vaapi -b:v {bitrate} -maxrate {bitrate} -f null - -benchmark",
+    "vaapi-hevc": r"ffmpeg -init_hw_device vaapi=va:/dev/dri/by-path/{gpu}-render -hwaccel vaapi -hwaccel_output_format vaapi -c:v hevc -i {video_path}/{video_file} -autoscale 0 -an -sn -vf scale_vaapi=-1:{scale}:format=nv12 -c:v hevc_vaapi -b:v {bitrate} -maxrate {bitrate} -f null - -benchmark",
+    "qsv-h264": r"{ffmpeg} -init_hw_device vaapi=va:/dev/dri/by-path/{gpu}-render -init_hw_device qsv=qs@va -hwaccel qsv -hwaccel_output_format qsv -c:v h264_qsv -i {video_path}/{video_file} -autoscale 0 -an -sn -vf scale_qsv=-1:{scale}:format=nv12 -c:v h264_qsv -preset veryfast -b:v {bitrate} -maxrate {bitrate} -f null - -benchmark",
+    "qsv-hevc": r"{ffmpeg} -init_hw_device vaapi=va:/dev/dri/by-path/{gpu}-render -init_hw_device qsv=qs@va -hwaccel qsv -hwaccel_output_format qsv -c:v hevc_qsv -i {video_path}/{video_file} -autoscale 0 -an -sn -vf scale_qsv=-1:{scale}:format=nv12 -c:v hevc_qsv -preset veryfast -b:v {bitrate} -maxrate {bitrate} -f null - -benchmark",
 }
 
 scaling = {
@@ -179,6 +184,7 @@ def run_ffmpeg(cmd, pid, is_cpu=False):
             rssline = line.split()
 
     try:
+        results["workers"] = pid
         results["frame"] = int(frameline[0].split("=")[-1])
         results["speed"] = float(frameline[6].split("=")[-1].replace("x", ""))
         results["time_s"] = float(timeline[3].split("=")[-1].replace("s", ""))
@@ -232,12 +238,14 @@ def do_benchmark(ffmpeg, video_path, video_file, stream, scale, workers, gpu):
     else:
         return (0, failure_reasons, results)
 
-
 def get_hwinfo(all_results, ffmpeg):
     all_results["hwinfo"] = dict()
 
     # Get our OS information from the distro library
-    all_results["hwinfo"]["os"] = os_release_info()
+    if(platform.system() == "Windows"):
+        all_results["hwinfo"]["os"] = hwitool.get_os_info()
+    else:
+        all_results["hwinfo"]["os"] = os_release_info()
 
     # Get our FFmpeg information
     ffmpeg_output = subprocess.run(
@@ -256,45 +264,24 @@ def get_hwinfo(all_results, ffmpeg):
         r"ffmpeg version (.*) Copyright", ffmpeg_information[0]
     ).group(1)
 
-    # Get our information using lshw because it is the most sensible output
-    try:
-        cpu_output = subprocess.run(
-            ["lshw", "-json", "-class", "cpu"],
-            capture_output=True,
-        )
-        if cpu_output.returncode > 0:
-            raise
-    except Exception:
-        click.echo(
-            "Could not run 'lshw'! The 'lshw' program is needed to gather required system information. Please install it and try again."
-        )
-        exit(1)
+    # Ported to "custom" hwitool, to get keep Windows Support
+    cpu_output = hwitool.get_cpu_info()
+    all_results["hwinfo"]["cpu"] = cpu_output
 
-    cpu_information = loads(cpu_output.stdout.decode())
-    all_results["hwinfo"]["cpu"] = cpu_information
+    memory_output = hwitool.get_memory_info()
+    all_results["hwinfo"]["memory"] = memory_output
 
-    memory_output = subprocess.run(
-        ["lshw", "-json", "-class", "memory"],
-        capture_output=True,
-    )
-    memory_information = loads(memory_output.stdout.decode())
-    all_results["hwinfo"]["memory"] = memory_information
-
-    gpu_output = subprocess.run(
-        ["lshw", "-json", "-class", "display"],
-        capture_output=True,
-    )
-    gpu_information = loads(gpu_output.stdout.decode())
+    gpu_output = hwitool.get_gpu_info()
     # Discard any GPUs we don't recognize (i.e. not NVIDIA, AMD, or Intel)
-    for element in gpu_information.copy():
+    for element in gpu_output.copy():
         if element["vendor"] not in [
             "NVIDIA Corporation",
             "Advanced Micro Devices, Inc. [AMD/ATI]",
             "Intel Corporation",
         ]:
-            gpu_information.remove(element)
+            gpu_output.remove(element)
 
-    all_results["hwinfo"]["gpu"] = gpu_information
+    all_results["hwinfo"]["gpu"] = gpu_output
 
     return all_results
 
@@ -337,11 +324,7 @@ def benchmark(ffmpeg, video_path, gpu_idx):
 
         # Handle nVidia multi-card, which needs a sequential ID instead of a bus ID; pass this as an idx to benchmark
         if gpu["vendor"] == "NVIDIA Corporation":
-            gpu_arg = [
-                g
-                for g in all_results["hwinfo"]["gpu"]
-                if g["vendor"] == "NVIDIA Corporation"
-            ].index(gpu)
+            gpu_arg = [g for g in all_results["hwinfo"]["gpu"] if g["vendor"] == "NVIDIA Corporation"].index(gpu)
         else:
             gpu_arg = gpu["businfo"].replace("@", "-")
 
@@ -351,8 +334,6 @@ def benchmark(ffmpeg, video_path, gpu_idx):
             gpu_arg = 0
         else:
             gpu_arg = gpu["businfo"].replace("@", "-")
-
-    all_results["hwinfo"]["selected_gpu"] = gpu_idx
 
     click.echo(f'''Using GPU "{gpu['vendor']} {gpu['product']}"''')
     click.echo()
@@ -392,12 +373,11 @@ def benchmark(ffmpeg, video_path, gpu_idx):
 
     click.echo()
 
-    all_results["tests"] = list()
+#Here the Test section is Build!
+
+    all_results["tests"]=[]
     for stream in ffmpeg_streams.items():
         invalid_results = False
-
-        test_result = dict()
-
         stream_type = stream[0]
         stream_method = stream_type.split("-")[0]
         stream_encode = stream_type.split("-")[1]
@@ -413,11 +393,10 @@ def benchmark(ffmpeg, video_path, gpu_idx):
             )
             or (stream_method == "qsv" and "Intel Corporation" not in supported_vendors)
         ):
+            #all_results["tests"][stream_type] = None
             continue
 
-        test_result["codec"] = stream_type
-        test_result["resolutions"] = list()
-
+        resolutions_elements = []
         click.echo(f"> Running {stream_type} encoder tests")
 
         for test_source in test_source_files.items():
@@ -427,22 +406,19 @@ def benchmark(ffmpeg, video_path, gpu_idx):
             source_resolution = source.split("-")[0]
             if stream_encode != source_encode:
                 continue
+            click.echo(f'>> Running tests with source file "{source_filename}"')
 
             for scale in scaling.items():
                 target_resolution = scale[0]
+
+                resolution_element = dict()
+                
                 target_scale_name = scale[1]["name"]
                 if int(target_resolution.replace("p", "")) > int(
                     source_resolution.replace("p", "")
                 ):
                     continue
-
-                resmap_result = {
-                    "scale_from": source_resolution,
-                    "scale_to": target_resolution,
-                    "runs": list(),
-                    "results": dict(),
-                }
-
+                
                 target_text = f"{source_resolution} -> {target_scale_name}"
                 click.echo(f">>> Running {target_text} tests")
 
@@ -450,9 +426,11 @@ def benchmark(ffmpeg, video_path, gpu_idx):
                 max_streams = 0
                 scaleback = False
                 results = {"speed": 2.0}
+                average_speed = 2.0
                 single_worker_speed = None
                 single_worker_rss_kb = 0.0
-                while results["speed"] > 1:
+                runs = None
+                while average_speed > 1:
                     click.echo(
                         f">>>> Running test with {workers} simultaneous stream(s)..."
                     )
@@ -488,22 +466,25 @@ def benchmark(ffmpeg, video_path, gpu_idx):
                             )
                             break
 
+                    if not runs:
+                        runs=[]
+                    runs.append(results)
+                    total_speed=0
+                    total_frame=0
+                    total_time=0
+                    for worker_results in runs:
+                        total_speed = total_speed + worker_results["speed"]
+                        total_frame = total_frame + worker_results["frame"]
+                        total_time = total_time + worker_results["time_s"]
+                    average_frame = total_frame / workers
+                    average_speed = total_speed / workers
+                    average_time = total_time / workers
                     click.echo(
-                        f">>>> First worker speed: {results['speed']}x @ frame {results['frame']}, total time {results['time_s']}s"
+                        f">>>> Average worker speed: {average_speed}x @ frame {average_frame}, average time {average_time}s"
                     )
-
                     if workers == 1:
                         single_worker_speed = results["speed"]
                         single_worker_rss_kb = results["rss_kb"]
-
-                    run_result = {
-                        "workers": workers,
-                        "frame": results["frame"],
-                        "speed": results["speed"],
-                        "time_s": results["time_s"],
-                        "rss_kb": results["rss_kb"],
-                    }
-                    resmap_result["runs"].append(run_result)
 
                     if results["speed"] >= 4 and not scaleback:
                         max_streams = workers
@@ -519,7 +500,6 @@ def benchmark(ffmpeg, video_path, gpu_idx):
                         sleep(1)
                     else:
                         break
-
                 if invalid_results:
                     break
                 else:
@@ -528,24 +508,35 @@ def benchmark(ffmpeg, video_path, gpu_idx):
                     click.echo(
                         f">>> Found max streams for {stream_type} {target_text}: {max_streams}; failure reason(s): {failure_reasons}"
                     )
-
-                    resmap_result["results"]["max_streams"] = max_streams
-                    resmap_result["results"]["failure_reasons"] = failure_reasons
-                    resmap_result["results"]["single_worker_speed"] = single_worker_speed
-                    resmap_result["results"][
-                        "single_worker_rss_kb"
-                    ] = single_worker_rss_kb
-
-                    test_result["resolutions"].append(resmap_result)
-
+                    print_results = dict()
+                    print_results["max_streams"] = max_streams
+                    print_results["failure_reasons"] = failure_reasons
+                    print_results["single_worker_speed"] = single_worker_speed
+                    print_results["single_worker_rss_kb"] = single_worker_rss_kb
+                    resolution_element = {
+                    "scale_from": source_resolution, 
+                    "scale_to": target_resolution,
+                    "runs": runs,
+                    "results": print_results,
+                    }
+                    runs = None
+                    resolutions_elements.append(resolution_element)
                     sleep(1)
-
             if invalid_results:
+                print_results = dict()
+                print_results["failure_reasons"] = failure_reasons
+                resolution_element = {"results": print_results}
+                resolutions_elements.append(resolution_element)
                 break
-
-        all_results["tests"].append(test_result)
-
+        #hier appenden
+        all_results["tests"].append({
+            "codec": stream_type,
+            "selected_cpu": 0,
+            "resolutions": resolutions_elements,
+        })
     return all_results
+
+
 
 
 CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"], max_content_width=120)
@@ -657,7 +648,7 @@ def cli(ffmpeg_path, video_path, output_path, gpu_idx, debug_flag):
         click.echo(dumps(results, indent=4))
     else:
         with open(output_path, "w") as fh:
-            dump(results, fh)
+            dump(results, fh, indent=4)
 
 
 def main():
