@@ -19,7 +19,6 @@
 #
 ###############################################################################
 
-#new
 import hwitool
 import platform
 
@@ -241,11 +240,8 @@ def do_benchmark(ffmpeg, video_path, video_file, stream, scale, workers, gpu):
 def get_hwinfo(all_results, ffmpeg):
     all_results["hwinfo"] = dict()
 
-    # Get our OS information from the distro library
-    if(platform.system() == "Windows"):
-        all_results["hwinfo"]["os"] = hwitool.get_os_info()
-    else:
-        all_results["hwinfo"]["os"] = os_release_info()
+    # Get our OS information through HWI
+    all_results["hwinfo"]["os"] = hwitool.get_os_info()
 
     # Get our FFmpeg information
     ffmpeg_output = subprocess.run(
@@ -264,7 +260,7 @@ def get_hwinfo(all_results, ffmpeg):
         r"ffmpeg version (.*) Copyright", ffmpeg_information[0]
     ).group(1)
 
-    # Ported to "custom" hwitool, to get keep Windows Support
+    # Ported to "custom" hwitool, to fetch hardware information seperately
     cpu_output = hwitool.get_cpu_info()
     all_results["hwinfo"]["cpu"] = cpu_output
 
@@ -291,7 +287,7 @@ def benchmark(ffmpeg, video_path, gpu_idx):
 
     all_results = dict()
     all_results = get_hwinfo(all_results, ffmpeg)
-
+    gpu_used = int()
     if len(all_results["hwinfo"]["gpu"]) > 1:
         if gpu_idx is None:
             click.echo(
@@ -310,6 +306,7 @@ def benchmark(ffmpeg, video_path, gpu_idx):
         else:
             try:
                 gpu = all_results["hwinfo"]["gpu"][gpu_idx]
+                gpu_used = gpu_idx
             except Exception:
                 click.echo(
                     'Invalid GPU index selected. Please re-run the test with the correct "--gpu" option.'
@@ -329,6 +326,7 @@ def benchmark(ffmpeg, video_path, gpu_idx):
             gpu_arg = gpu["businfo"].replace("@", "-")
 
     else:
+        gpu_used = 0
         gpu = all_results["hwinfo"]["gpu"][0]
         if gpu["vendor"] == "NVIDIA Corporation":
             gpu_arg = 0
@@ -393,7 +391,6 @@ def benchmark(ffmpeg, video_path, gpu_idx):
             )
             or (stream_method == "qsv" and "Intel Corporation" not in supported_vendors)
         ):
-            #all_results["tests"][stream_type] = None
             continue
 
         resolutions_elements = []
@@ -528,10 +525,30 @@ def benchmark(ffmpeg, video_path, gpu_idx):
                 resolution_element = {"results": print_results}
                 resolutions_elements.append(resolution_element)
                 break
-        #hier appenden
+        #Differenciating CPU/GPU stream and searching/adding "driver limit" failure reason
+            
+        if re.match(r"^cpu-", stream_type):
+            is_cpu = True
+        else:
+            is_cpu = False
+        if is_cpu:
+            selected_device = "selected_cpu"
+            selected_device_index = 0
+        else:
+            selected_device = "selected_gpu"
+            selected_device_index = gpu_used
+            if (gpu['vendor']=="NVIDIA Corporation"):
+                patched_driver = False
+                for resolution in resolutions_elements:
+                    if resolution["results"]["max_streams"] >5:
+                        patched_driver=True
+                if not patched_driver:
+                    for resolution in resolutions_elements:
+                        resolution["results"]["failure_reasons"].append("driver limit")
+        #appending codec results to all_results
         all_results["tests"].append({
             "codec": stream_type,
-            "selected_cpu": 0,
+            selected_device: selected_device_index,
             "resolutions": resolutions_elements,
         })
     return all_results
