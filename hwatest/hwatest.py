@@ -54,14 +54,14 @@ test_source_files = {
 }
 
 ffmpeg_streams = {
-    "cpu-h264": r"{ffmpeg} -c:v h264 -i {video_path}/{video_file} -autoscale 0 -an -sn -vf scale=trunc(min(max(iw\,ih*a)\,{scale})/2)*2:trunc(ow/a/2)*2,format=yuv420p -c:v libx264 -preset veryfast -b:v {bitrate} -maxrate {bitrate} -f null - -benchmark",
-    "cpu-hevc": r"{ffmpeg} -c:v hevc -i {video_path}/{video_file} -autoscale 0 -an -sn -vf scale=trunc(min(max(iw\,ih*a)\,{scale})/2)*2:trunc(ow/a/2)*2,format=yuv420p -c:v libx265 -preset veryfast -b:v {bitrate} -maxrate {bitrate} -f null - -benchmark",
+    #"cpu-h264": r"{ffmpeg} -c:v h264 -i {video_path}/{video_file} -autoscale 0 -an -sn -vf scale=trunc(min(max(iw\,ih*a)\,{scale})/2)*2:trunc(ow/a/2)*2,format=yuv420p -c:v libx264 -preset veryfast -b:v {bitrate} -maxrate {bitrate} -f null - -benchmark",
+    #"cpu-hevc": r"{ffmpeg} -c:v hevc -i {video_path}/{video_file} -autoscale 0 -an -sn -vf scale=trunc(min(max(iw\,ih*a)\,{scale})/2)*2:trunc(ow/a/2)*2,format=yuv420p -c:v libx265 -preset veryfast -b:v {bitrate} -maxrate {bitrate} -f null - -benchmark",
     "nvenc-h264": r"{ffmpeg} -init_hw_device cuda=cu:{gpu} -hwaccel cuda -hwaccel_output_format cuda -c:v h264_cuvid -i {video_path}/{video_file} -autoscale 0 -an -sn -vf scale_cuda=-1:{scale}:yuv420p -c:v h264_nvenc -preset p1 -b:v {bitrate} -maxrate {bitrate} -f null - -benchmark",
-    "nvenc-hevc": r"{ffmpeg} -init_hw_device cuda=cu:{gpu} -hwaccel cuda -hwaccel_output_format cuda -c:v hevc_cuvid -i {video_path}/{video_file} -autoscale 0 -an -sn -vf scale_cuda=-1:{scale}:yuv420p -c:v hevc_nvenc -preset p1 -b:v {bitrate} -maxrate {bitrate} -f null - -benchmark",
-    "vaapi-h264": r"ffmpeg -init_hw_device vaapi=va:/dev/dri/by-path/{gpu}-render -hwaccel vaapi -hwaccel_output_format vaapi -c:v h264 -i {video_path}/{video_file} -autoscale 0 -an -sn -vf scale_vaapi=-1:{scale}:format=nv12 -c:v h264_vaapi -b:v {bitrate} -maxrate {bitrate} -f null - -benchmark",
-    "vaapi-hevc": r"ffmpeg -init_hw_device vaapi=va:/dev/dri/by-path/{gpu}-render -hwaccel vaapi -hwaccel_output_format vaapi -c:v hevc -i {video_path}/{video_file} -autoscale 0 -an -sn -vf scale_vaapi=-1:{scale}:format=nv12 -c:v hevc_vaapi -b:v {bitrate} -maxrate {bitrate} -f null - -benchmark",
-    "qsv-h264": r"{ffmpeg} -init_hw_device vaapi=va:/dev/dri/by-path/{gpu}-render -init_hw_device qsv=qs@va -hwaccel qsv -hwaccel_output_format qsv -c:v h264_qsv -i {video_path}/{video_file} -autoscale 0 -an -sn -vf scale_qsv=-1:{scale}:format=nv12 -c:v h264_qsv -preset veryfast -b:v {bitrate} -maxrate {bitrate} -f null - -benchmark",
-    "qsv-hevc": r"{ffmpeg} -init_hw_device vaapi=va:/dev/dri/by-path/{gpu}-render -init_hw_device qsv=qs@va -hwaccel qsv -hwaccel_output_format qsv -c:v hevc_qsv -i {video_path}/{video_file} -autoscale 0 -an -sn -vf scale_qsv=-1:{scale}:format=nv12 -c:v hevc_qsv -preset veryfast -b:v {bitrate} -maxrate {bitrate} -f null - -benchmark",
+    #"nvenc-hevc": r"{ffmpeg} -init_hw_device cuda=cu:{gpu} -hwaccel cuda -hwaccel_output_format cuda -c:v hevc_cuvid -i {video_path}/{video_file} -autoscale 0 -an -sn -vf scale_cuda=-1:{scale}:yuv420p -c:v hevc_nvenc -preset p1 -b:v {bitrate} -maxrate {bitrate} -f null - -benchmark",
+    #"vaapi-h264": r"ffmpeg -init_hw_device vaapi=va:/dev/dri/by-path/{gpu}-render -hwaccel vaapi -hwaccel_output_format vaapi -c:v h264 -i {video_path}/{video_file} -autoscale 0 -an -sn -vf scale_vaapi=-1:{scale}:format=nv12 -c:v h264_vaapi -b:v {bitrate} -maxrate {bitrate} -f null - -benchmark",
+    #"vaapi-hevc": r"ffmpeg -init_hw_device vaapi=va:/dev/dri/by-path/{gpu}-render -hwaccel vaapi -hwaccel_output_format vaapi -c:v hevc -i {video_path}/{video_file} -autoscale 0 -an -sn -vf scale_vaapi=-1:{scale}:format=nv12 -c:v hevc_vaapi -b:v {bitrate} -maxrate {bitrate} -f null - -benchmark",
+    #"qsv-h264": r"{ffmpeg} -init_hw_device vaapi=va:/dev/dri/by-path/{gpu}-render -init_hw_device qsv=qs@va -hwaccel qsv -hwaccel_output_format qsv -c:v h264_qsv -i {video_path}/{video_file} -autoscale 0 -an -sn -vf scale_qsv=-1:{scale}:format=nv12 -c:v h264_qsv -preset veryfast -b:v {bitrate} -maxrate {bitrate} -f null - -benchmark",
+    #"qsv-hevc": r"{ffmpeg} -init_hw_device vaapi=va:/dev/dri/by-path/{gpu}-render -init_hw_device qsv=qs@va -hwaccel qsv -hwaccel_output_format qsv -c:v hevc_qsv -i {video_path}/{video_file} -autoscale 0 -an -sn -vf scale_qsv=-1:{scale}:format=nv12 -c:v hevc_qsv -preset veryfast -b:v {bitrate} -maxrate {bitrate} -f null - -benchmark",
 }
 
 scaling = {
@@ -469,6 +469,18 @@ def benchmark(ffmpeg, video_path, gpu_idx):
                     total_speed=0
                     total_frame=0
                     total_time=0
+                    #Detect wether the script works correctly on large worker amount (adressing bug)
+                    if workers > 10:
+                        speed_values = []
+                        for run in runs[-10:]:
+                            speed_values.append(run["speed"])
+                        last10_average_speed=sum(speed_values)/len(speed_values)
+                        if (last10_average_speed / speed_values[0]) < 0.3: #if the average speed has not gone down more then 0.3 in 10 runs
+                            print("-- Infinite Bug Found -- You might want to restart the script!")
+                            exit(1)
+                        else:
+                            print("-- No Infinite Bug happened in this Run --")
+
                     for worker_results in runs:
                         total_speed = total_speed + worker_results["speed"]
                         total_frame = total_frame + worker_results["frame"]
