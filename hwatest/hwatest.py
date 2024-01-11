@@ -126,21 +126,12 @@ def run_ffmpeg(cmd, pid, is_cpu=False):
         for line in ffmpeg_stderr:
             if re.search(r" failed: (.*)\([0-9]+\)", ffmpeg_stderr):
                 failure_reason = (
-                    re.search(r" failed: (.*)\([0-9]+\)", ffmpeg_stderr)
-                    .group(1)
-                    .strip()
+                    re.search(r" failed: (.*)\([0-9]+\)", ffmpeg_stderr).group(1).strip()
                 )
                 break
             elif re.search(r" failed -> (.*): (.*)", ffmpeg_stderr):
                 failure_reason = (
                     re.search(r" failed -> (.*): (.*)", ffmpeg_stderr).group(2).strip()
-                )
-                break
-            elif re.search(r" failed -> (.*): (.*)", ffmpeg_stderr):
-                failure_reason = (
-                    re.search(r" failed!: (.*) \([0-9]+\))", ffmpeg_stderr)
-                    .group(1)
-                    .strip()
                 )
                 break
             elif re.search(r"^Error (.*)", ffmpeg_stderr):
