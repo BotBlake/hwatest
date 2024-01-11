@@ -120,7 +120,7 @@ def run_ffmpeg(cmd, pid, is_cpu=False):
         failure_reason = f"generic failure {e}"
 
     failure_reason = None
-    if retcode > 0 and retcode < 255:
+    if 0 < retcode < 255:
         # Figure out why we failed based on the ffmpeg output, the first error
         # found is canonical
         for line in ffmpeg_stderr:
@@ -153,7 +153,6 @@ def run_ffmpeg(cmd, pid, is_cpu=False):
             failure_reason = "generic failure"
 
     results = dict()
-
     time_s = 0.0
     for line in ffmpeg_stderr.split("\n"):
         if re.match(r"^bench: utime", line):
@@ -203,10 +202,7 @@ def do_benchmark(ffmpeg, video_path, video_file, stream, scale, workers, gpu):
         gpu=gpu,
     )
 
-    if re.match(r"^cpu-", stream):
-        is_cpu = True
-    else:
-        is_cpu = False
+    is_cpu = re.match(r"^cpu-", stream) is not None
 
     results = None
     total_rets = 0
@@ -215,7 +211,6 @@ def do_benchmark(ffmpeg, video_path, video_file, stream, scale, workers, gpu):
             executor.submit(run_ffmpeg, stream_cmd, i, is_cpu): i
             for i in range(1, workers + 1, 1)
         }
-
         had_failure = False
         failure_reasons = set()
         for future in concurrent.futures.as_completed(future_to_results):
@@ -340,16 +335,18 @@ def benchmark(ffmpeg, video_path, gpu_idx):
         video_url = video["url"]
         video_filename = video_url.split("/")[-1]
         video_filesize = video["size"]
-        if not os.path.exists(f"{video_path}/{video_filename}"):
-            click.echo(f'File not found: "{video_path}/{video_filename}"')
+        video_filepath = f"{video_path}/{video_filename}"
+
+        if not os.path.exists(video_filepath):
+            click.echo(f'File not found: "{video_filepath}"')
             file_invalid = True
         else:
             actual_filesize = int(
-                os.stat(f"{video_path}/{video_filename}").st_size / (1024 * 1024)
+                os.stat(video_filepath).st_size / (1024 * 1024)
             )
             if actual_filesize != video_filesize:
                 click.echo(
-                    f'File "{video_path}/{video_filename}" size is invalid: {actual_filesize}MB not {video_filesize}MB'
+                    f'File "{video_filepath}" size is invalid: {actual_filesize}MB not {video_filesize}MB'
                 )
                 file_invalid = True
             else:
@@ -374,15 +371,10 @@ def benchmark(ffmpeg, video_path, gpu_idx):
 #Here the Test section is Build!
 
     all_results["tests"]=[]
-    for stream in ffmpeg_streams.items():
+    for stream_type, stream_info in ffmpeg_streams.items():
         invalid_results = False
-        stream_type = stream[0]
-        stream_method = stream_type.split("-")[0]
-        stream_encode = stream_type.split("-")[1]
-
-        supported_vendors = list()
-        for gpu in all_results["hwinfo"]["gpu"]:
-            supported_vendors.append(gpu["vendor"])
+        stream_method, stream_encode = stream_type.split("-")[0]
+        supported_vendors = [gpu["vendor"] for gpu in all_results["hwinfo"]["gpu"]]
         if (
             (stream_method == "nvenc" and "NVIDIA Corporation" not in supported_vendors)
             or (
@@ -471,9 +463,7 @@ def benchmark(ffmpeg, video_path, gpu_idx):
                     total_time=0
                     #Detect wether the script works correctly on large worker amount (adressing bug)
                     if workers > 10:
-                        speed_values = []
-                        for run in runs[-10:]:
-                            speed_values.append(run["speed"])
+                        speed_values = [run["speed"] for run in runs[-10:]]
                         last10_average_speed=sum(speed_values)/len(speed_values)
                         if (last10_average_speed / speed_values[0]) < 0.3: #if the average speed has not gone down more then 0.3 in 10 runs
                             print("-- Infinite Bug Found -- You might want to restart the script!")
@@ -482,9 +472,9 @@ def benchmark(ffmpeg, video_path, gpu_idx):
                             print("-- No Infinite Bug happened in this Run --")
 
                     for worker_results in runs:
-                        total_speed = total_speed + worker_results["speed"]
-                        total_frame = total_frame + worker_results["frame"]
-                        total_time = total_time + worker_results["time_s"]
+                        total_speed += worker_results["speed"]
+                        total_frame += worker_results["frame"]
+                        total_time += worker_results["time_s"]
                     average_frame = total_frame / workers
                     average_speed = total_speed / workers
                     average_time = total_time / workers
@@ -494,7 +484,6 @@ def benchmark(ffmpeg, video_path, gpu_idx):
                     if workers == 1:
                         single_worker_speed = results["speed"]
                         single_worker_rss_kb = results["rss_kb"]
-
                     if results["speed"] >= 4 and not scaleback:
                         max_streams = workers
                         workers *= 4
@@ -540,20 +529,13 @@ def benchmark(ffmpeg, video_path, gpu_idx):
         #Differenciating CPU/GPU stream and searching/adding "driver limit" failure reason
             
         if re.match(r"^cpu-", stream_type):
-            is_cpu = True
-        else:
-            is_cpu = False
-        if is_cpu:
             selected_device = "selected_cpu"
             selected_device_index = 0
         else:
             selected_device = "selected_gpu"
             selected_device_index = gpu_used
             if (gpu['vendor']=="NVIDIA Corporation"):
-                patched_driver = False
-                for resolution in resolutions_elements:
-                    if resolution["results"]["max_streams"] >5:
-                        patched_driver=True
+                patched_driver = any(resolution["results"]["max_streams"] > 5 for resolution in resolutions_elements)
                 if not patched_driver:
                     for resolution in resolutions_elements:
                         resolution["results"]["failure_reasons"].append("driver limit")
