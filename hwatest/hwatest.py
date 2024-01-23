@@ -267,7 +267,7 @@ def get_hwinfo(all_results, ffmpeg):
     return all_results
 
 
-def benchmark(ffmpeg, video_path, gpu_idx):
+def benchmark(ffmpeg, video_path, gpu_idx, gpu_actual_vendor):
     video_files = list()
 
     all_results = dict()
@@ -290,6 +290,8 @@ def benchmark(ffmpeg, video_path, gpu_idx):
             exit(1)
         else:
             try:
+                if gpu_actual_vendor:
+                    all_results["hwinfo"]["gpu"][gpu_idx]["vendor"] = gpu_actual_vendor
                 gpu = all_results["hwinfo"]["gpu"][gpu_idx]
                 gpu_used = gpu_idx
             except Exception:
@@ -312,6 +314,8 @@ def benchmark(ffmpeg, video_path, gpu_idx):
 
     else:
         gpu_used = 0
+        if gpu_actual_vendor:
+            all_results["hwinfo"]["gpu"][0]["vendor"] = gpu_actual_vendor
         gpu = all_results["hwinfo"]["gpu"][0]
         if gpu["vendor"] == "NVIDIA Corporation":
             gpu_arg = 0
@@ -539,9 +543,6 @@ def benchmark(ffmpeg, video_path, gpu_idx):
         })
     return all_results
 
-
-
-
 CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"], max_content_width=120)
 
 
@@ -583,13 +584,22 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"], max_content_width=12
     help="The specific GPU to test in a multi-GPU system.",
 )
 @click.option(
+    "--vgpu",
+    "gpu_actual_vendor",
+    type=str,
+    default=None,
+    show_default=True,
+    required=False,
+    help="Replace the GPU Vendor of the Used GPU with input (for Virtual Displays)",
+)
+@click.option(
     "--debug",
     "debug_flag",
     is_flag=True,
     default=False,
     help="Enable additional debug output.",
 )
-def cli(ffmpeg_path, video_path, output_path, gpu_idx, debug_flag):
+def cli(ffmpeg_path, video_path, output_path, gpu_idx, gpu_actual_vendor, debug_flag):
     """
     A CPU and Hardware Acceleration (GPU) tester for Jellyfin
 
@@ -639,10 +649,15 @@ def cli(ffmpeg_path, video_path, output_path, gpu_idx, debug_flag):
     output_path = os.path.expanduser(output_path)
     click.echo(f'''Using JSON output file "{output_path}"''')
 
+    if gpu_actual_vendor:
+        if("nvidia" in gpu_actual_vendor.lower()):
+            gpu_actual_vendor = "NVIDIA Corporation"
+        click.echo(f"Correcting Vendor to {gpu_actual_vendor}")
+
     if not os.path.exists(video_path):
         os.mkdir(video_path)
 
-    results = benchmark(ffmpeg_path, video_path, gpu_idx)
+    results = benchmark(ffmpeg_path, video_path, gpu_idx, gpu_actual_vendor)
 
     click.echo()
     click.echo("Benchmark finished, outputting results...")
