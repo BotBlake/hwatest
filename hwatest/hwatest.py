@@ -30,9 +30,8 @@ import subprocess
 import re
 import concurrent.futures
 
-from json import dump, dumps, loads
+from json import dump, dumps
 from time import sleep
-from distro import os_release_info
 
 test_source_files = {
     "2160p-hevc": {
@@ -362,9 +361,11 @@ def benchmark(ffmpeg, video_path, gpu_idx):
 #Here the Test section is Build!
 
     all_results["tests"]=[]
-    for stream_type, stream_info in ffmpeg_streams.items():
+    for stream in ffmpeg_streams.items():
         invalid_results = False
-        stream_method, stream_encode = stream_type.split("-")[0]
+        stream_type = stream[0]
+        stream_method = stream_type.split("-")[0]
+        stream_encode = stream_type.split("-")[1]
         supported_vendors = [gpu["vendor"] for gpu in all_results["hwinfo"]["gpu"]]
         if (
             (stream_method == "nvenc" and "NVIDIA Corporation" not in supported_vendors)
@@ -525,11 +526,11 @@ def benchmark(ffmpeg, video_path, gpu_idx):
         else:
             selected_device = "selected_gpu"
             selected_device_index = gpu_used
-            if (gpu['vendor']=="NVIDIA Corporation"):
-                patched_driver = any(resolution["results"]["max_streams"] > 5 for resolution in resolutions_elements)
-                if not patched_driver:
-                    for resolution in resolutions_elements:
-                        resolution["results"]["failure_reasons"].append("driver limit")
+            #if (gpu['vendor']=="NVIDIA Corporation"):
+            #    patched_driver = any(resolution["results"]["max_streams"] > 5 for resolution in resolutions_elements)
+            #    if not patched_driver:
+            #        for resolution in resolutions_elements:
+            #            resolution["results"]["failure_reasons"].append("driver limit")
         #appending codec results to all_results
         all_results["tests"].append({
             "codec": stream_type,
