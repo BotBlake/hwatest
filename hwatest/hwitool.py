@@ -69,8 +69,8 @@ def get_cpu_info():
                 "vendor": cpu.Manufacturer.strip(),
                 "physid": phys_id,
                 #"businfo": None,
-                "units": "Hz",
-                "size": cpu.MaxClockSpeed, #Note that Intel does only Report MaxClock without TurboBoost
+                #"units": "Hz",
+                #"size": cpu.MaxClockSpeed, #Note that Intel does only Report MaxClock without TurboBoost
                 #"capacity": None,
                 "width": cpu.AddressWidth,
             }
