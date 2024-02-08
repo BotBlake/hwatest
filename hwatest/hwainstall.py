@@ -6,6 +6,14 @@ import zipfile
 import tarfile
 
 
+current_path = os.path.dirname(os.path.realpath(__file__))  # Get current script's directory
+hwatest_path = os.path.join(current_path, "hwatest.py")
+
+hwa_command = [
+    "python3",
+    hwatest_path,
+]
+
 packages = ["click", "distro"]
 additional_software = []
 manual_source_files = {
@@ -49,8 +57,9 @@ def download_source_files(sources): #Downloading Method from hwatest :D
     else:
         print(f"Directory '{video_path}' already exists.")
 
+    video_path = os.path.abspath(video_path)
+
     print()
-    video_files = list()
     for video in sources.values():
         video_url = video["url"]
         video_filename = video_url.split("/")[-1]
@@ -80,9 +89,8 @@ def download_source_files(sources): #Downloading Method from hwatest :D
             print(
                 f'Found valid test file "{video_path}/{video_filename}" ({video_filesize}M).'
             )
-        video_files.append(video_filename)
     print()
-    return video_files
+    return video_path
 
 def download_ffmpeg(sources, platform):
     print("FFMPEG HAS to be on a FAST DRIVE!")
@@ -93,6 +101,8 @@ def download_ffmpeg(sources, platform):
         print(f"Directory '{ffmpeg_path}' created successfully.")
     else:
         print(f"Directory '{ffmpeg_path}' already exists.")
+
+    ffmpeg_path = os.path.abspath(ffmpeg_path)
 
     print()
     sha265_required = sources[platform.lower()]["sha256"]
@@ -166,22 +176,27 @@ print()
 
 response = input("Do you want to pre Download the Video Files? (y/n): ")
 if response.lower() == "y":
-    download_source_files(manual_source_files)
+    vid_scr = os.path.abspath(download_source_files(manual_source_files))
+    hwa_command.append("--videos")
+    hwa_command.append(vid_scr)
 
 response = input("Do you want to install the FFMPEG Portable? (y/n): ")
 if response.lower() == "y":
-    print(download_ffmpeg(manual_ffmpeg_files, system_os))
+    ffmpeg_src = os.path.abspath(download_ffmpeg(manual_ffmpeg_files, system_os))
+    hwa_command.append("--ffmpeg")
+    hwa_command.append(ffmpeg_src)
+
 
 print("You are now ready for hwatest!")
 response = input("Do you want to start hwatest now? (you may be required to add manual values) (y/n): ")
 if response.lower() == "y":
     vm_question = input("Do you run this script inside a Virtual environment? (y/n): ")
     if vm_question.lower() == "y":
-        vm_flag = True
-    elif vm_question.lower() == "n":
-        vm_flag = False
-    else:
-        print("Please execute this manualy! Make sure to use the --vm flag, if you are on a Virtualized Enfironment!")
-        exit(1)
-    print()
-    print("Sorry. Auto Execution is not supported yet!")
+        #hwa_command.append("--vm")
+        print("Vm Mode doesnt yet exist on the Script! Its likely that this will not work!")
+    command = " ".join(hwa_command)
+    print(command)
+    try:
+        subprocess.run(hwa_command)
+    except Exception as e:
+        print("Error:", e)
