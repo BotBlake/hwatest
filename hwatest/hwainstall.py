@@ -1,6 +1,9 @@
 import os
 import subprocess
 import urllib.request
+from hashlib import sha256
+import zipfile
+import tarfile
 
 packages = ["click", "distro"]
 additional_software = []
@@ -22,11 +25,22 @@ manual_source_files = {
         "size": 142,
     },
 }
-
+manual_ffmpeg_files = {
+    "windows" : {
+        "url" : "https://github.com/jellyfin/jellyfin-ffmpeg/releases/download/v6.0.1-2/jellyfin-ffmpeg_6.0.1-2-portable_win64.zip",
+        "sha256" : "e16bef692772d58955bed223f460e31c312ccc02208b8c9c51ed35e429fc5d42",
+        "name" : "jellyfin-ffmpeg_6.0.1-2-portable_win64.zip",
+    },
+    "linux" : {
+        "url" : "https://github.com/jellyfin/jellyfin-ffmpeg/releases/download/v6.0.1-2/jellyfin-ffmpeg_6.0.1-2_portable_linux64-gpl.tar.xz",
+        "sha256" : "b17da23d5e1dfe148ffd5c082a51547ac5a73dcc9d4534fe63ebb450da43d5ed",
+        "name" : "jellyfin-ffmpeg_6.0.1-2_portable_linux64-gpl.tar.xz",
+    }
+}
 
 def download_source_files(sources): #Downloading Method from hwatest :D
     print("Files HAVE to be on a FAST DRIVE!")
-    video_path = input("Enter path to Download folder: ")
+    video_path = input("Enter path to Video Download folder: ")
 
     if not os.path.exists(video_path):
         os.makedirs(video_path)
@@ -69,8 +83,47 @@ def download_source_files(sources): #Downloading Method from hwatest :D
     print()
     return video_files
 
+def download_ffmpeg(sources, platform):
+    print("FFMPEG HAS to be on a FAST DRIVE!")
+    ffmpeg_path = input("Enter path to FFMPEG Download folder: ")
 
+    if not os.path.exists(ffmpeg_path):
+        os.makedirs(ffmpeg_path)
+        print(f"Directory '{ffmpeg_path}' created successfully.")
+    else:
+        print(f"Directory '{ffmpeg_path}' already exists.")
 
+    print()
+    sha265_required = sources[platform.lower()]["sha256"]
+    download_url = sources[platform.lower()]["url"]
+    download_name = sources[platform.lower()]["name"]
+
+    ffmpeg_arch_path = f"{ffmpeg_path}/{download_name}"
+    print(f'Downloading FFMPEG Portable for {platform} to "{ffmpeg_path}"... ', end=' ', flush=True)
+    urllib.request.urlretrieve(download_url, ffmpeg_arch_path)
+    print("done.")
+
+    sha256_hash = sha256()  # Now Perform Checksumming
+    with open(ffmpeg_arch_path, 'rb') as f:
+        for byte_block in iter(lambda: f.read(4096), b""):
+            sha256_hash.update(byte_block)
+    if (sha256_hash.hexdigest() != sha265_required):
+        print("The download Failed! || SHA256 Checksum Missmatch")
+        exit(1)
+    
+    if ffmpeg_arch_path.endswith('.zip'):
+        with zipfile.ZipFile(ffmpeg_arch_path, 'r') as zip_ref:
+            zip_ref.extractall(ffmpeg_path)
+    elif ffmpeg_arch_path.endswith('.tar.gz'):
+        with tarfile.open(ffmpeg_arch_path, 'r:gz') as tar_ref:
+            tar_ref.extractall(ffmpeg_path)
+    os.remove(ffmpeg_arch_path)
+
+    if(platform.lower()=="windows"):
+        ffmpeg_executable = f"{ffmpeg_path}/ffmpeg.exe"
+    else:
+        ffmpeg_executable = f"{ffmpeg_path}/ffmpeg"
+    return ffmpeg_executable
 
 #Fetch Basic info:
 if(os.name == "nt"):  # Windows
@@ -114,5 +167,8 @@ response = input("Do you want to pre Download the Video Files? (y/n): ")
 if response.lower() == "y":
     download_source_files(manual_source_files)
 
+response = input("Do you want to install the FFMPEG Portable? (y/n): ")
+if response.lower() == "y":
+    print(download_ffmpeg(manual_ffmpeg_files, system_os))
 
 print("You are now ready for hwatest!")
