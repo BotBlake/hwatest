@@ -5,6 +5,7 @@ from hashlib import sha256
 import zipfile
 import tarfile
 
+
 packages = ["click", "distro"]
 additional_software = []
 manual_source_files = {
@@ -172,3 +173,15 @@ if response.lower() == "y":
     print(download_ffmpeg(manual_ffmpeg_files, system_os))
 
 print("You are now ready for hwatest!")
+response = input("Do you want to start hwatest now? (you may be required to add manual values) (y/n): ")
+if response.lower() == "y":
+    vm_question = input("Do you run this script inside a Virtual environment? (y/n): ")
+    if vm_question.lower() == "y":
+        vm_flag = True
+    elif vm_question.lower() == "n":
+        vm_flag = False
+    else:
+        print("Please execute this manualy! Make sure to use the --vm flag, if you are on a Virtualized Enfironment!")
+        exit(1)
+    print()
+    print("Sorry. Auto Execution is not supported yet!")
