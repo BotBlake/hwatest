@@ -2,6 +2,7 @@ import os
 import subprocess
 import urllib.request
 from hashlib import sha256
+from shutil import rmtree
 import zipfile
 import tarfile
 
@@ -110,25 +111,47 @@ def download_ffmpeg(sources, platform):
     download_name = sources[platform.lower()]["name"]
 
     ffmpeg_arch_path = f"{ffmpeg_path}/{download_name}"
-    print(f'Downloading FFMPEG Portable for {platform} to "{ffmpeg_path}"... ', end=' ', flush=True)
-    urllib.request.urlretrieve(download_url, ffmpeg_arch_path)
-    print("done.")
-
-    sha256_hash = sha256()  # Now Perform Checksumming
-    with open(ffmpeg_arch_path, 'rb') as f:
-        for byte_block in iter(lambda: f.read(4096), b""):
-            sha256_hash.update(byte_block)
-    if (sha256_hash.hexdigest() != sha265_required):
-        print("The download Failed! || SHA256 Checksum Missmatch")
-        exit(1)
+    use_existing = False
+    if os.path.exists(ffmpeg_arch_path): #if archive is already existing
+        print("Existing ffmpeg Archive found!", end="")
+        use_existing = True
+        sha256_hash = sha256()  # Now Perform Checksumming
+        with open(ffmpeg_arch_path, 'rb') as f:
+            for byte_block in iter(lambda: f.read(4096), b""):
+                sha256_hash.update(byte_block)
+        if (sha256_hash.hexdigest() != sha265_required):
+            print("... Checksumming Failed!")
+            use_existing = False
+            os.remove(ffmpeg_arch_path)
+        else:
+            print()
     
+    if not use_existing: #if there is no valid archive, redownload
+        print(f'Downloading FFMPEG Portable for {platform} to "{ffmpeg_path}"... ', end=' ', flush=True)
+        urllib.request.urlretrieve(download_url, ffmpeg_arch_path)
+        print("done.")
+
+        sha256_hash = sha256()  # Now Perform Checksumming
+        with open(ffmpeg_arch_path, 'rb') as f:
+            for byte_block in iter(lambda: f.read(4096), b""):
+                sha256_hash.update(byte_block)
+        if (sha256_hash.hexdigest() != sha265_required):
+            print("The download Failed! || SHA256 Checksum Missmatch")
+            exit(1)
+
+    
+    ffmpeg_path = f"{ffmpeg_path}\FFMPEG_Files" #Creating subdir for ffmpeg Files (easy to delete)
+    if os.path.exists(ffmpeg_path):
+        rmtree(ffmpeg_path)
+        print("Replacing existing FFMPEG Files with validated ones.")
+    os.makedirs(ffmpeg_path)
+
     if ffmpeg_arch_path.endswith('.zip'):
         with zipfile.ZipFile(ffmpeg_arch_path, 'r') as zip_ref:
             zip_ref.extractall(ffmpeg_path)
     elif ffmpeg_arch_path.endswith('.tar.gz'):
         with tarfile.open(ffmpeg_arch_path, 'r:gz') as tar_ref:
             tar_ref.extractall(ffmpeg_path)
-    os.remove(ffmpeg_arch_path)
 
     if(platform.lower()=="windows"):
         ffmpeg_executable = f"{ffmpeg_path}/ffmpeg.exe"
